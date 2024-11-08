@@ -88,6 +88,38 @@ def delete_ucelli(id):
 
     return jsonify({"message": "Animale eliminato con successo!"}), 200
 
+@app.route('/api/update/uccelli/<int:id>', methods=['PUT'])
+def update_uccelli(id):
+    data = request.get_json()
+
+    # Verifica che tutti i campi necessari siano presenti
+    if not all(key in data for key in ('Nome_Comune', 'famiglia', 'Apertura_Alare', 'Habitat','Alimentazione')):
+        return jsonify({"error": "Dati mancanti"}), 400
+
+    nome = data['Nome_Comune']
+    famiglia = data['famiglia']
+    apertura_alare = data['Apertura_Alare']
+    habitat = data['Habitat']
+    alimentazione = data['Alimentazione']
+
+    # Connessione al database e aggiornamento dei dati
+    mydb = connect_to_db()
+    mycursor = mydb.cursor()
+
+    sql = "UPDATE Uccelli SET Nome_Comune = %s, famiglia = %s, Apertura_Alare = %s, Habitat = %s, Alimentazione = %s WHERE Id = %s"
+    values = (nome, famiglia, apertura_alare, habitat,alimentazione, id)
+    mycursor.execute(sql, values)
+    mydb.commit()
+
+    mycursor.close()
+    mydb.close()
+
+    # Controlla se l'update ha modificato delle righe
+    if mycursor.rowcount == 0:
+        return jsonify({"message": "Animale non trovato"}), 404
+
+    return jsonify({"message": "Animale aggiornato con successo!"}), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)
