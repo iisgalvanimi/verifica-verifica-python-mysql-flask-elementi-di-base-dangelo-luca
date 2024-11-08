@@ -121,5 +121,56 @@ def update_uccelli(id):
     return jsonify({"message": "Animale aggiornato con successo!"}), 200
 
 
+from flask import Flask, jsonify, request
+import mysql.connector
+
+app = Flask(__name__)
+
+# Funzione per connettersi al database
+def connect_to_db():
+    try:
+        return mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="Animali"
+        )
+    except mysql.connector.Error as err:
+        return None
+
+@app.route('/api/uccelli/apertura_alare/<int:max_apertura>', methods=['GET'])
+def get_uccelli_by_apertura_alare(max_apertura):
+    # Connessione al database
+    mydb = connect_to_db()
+    if not mydb:
+        return jsonify({"error": "Errore di connessione al database"}), 500
+    
+    mycursor = mydb.cursor(dictionary=True)
+
+    try:
+        # Filtra gli uccelli con apertura alare inferiore a `max_apertura`
+        query = "SELECT * FROM Uccelli WHERE Apertura_Alare < %s"
+        mycursor.execute(query, (max_apertura,))
+        uccelli = mycursor.fetchall()
+
+        if not uccelli:
+            return jsonify({"message": f"Nessun uccello trovato con apertura alare inferiore a {max_apertura} cm"}), 404
+
+        return jsonify(uccelli)
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": f"Errore nel database: {err}"}), 500
+
+    finally:
+        if mycursor:
+            mycursor.close()
+        if mydb:
+            mydb.close()
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
 if __name__ == '__main__':
     app.run(debug=True)
