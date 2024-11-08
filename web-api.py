@@ -64,5 +64,30 @@ def add_uccelli():
     except mysql.connector.Error as err:
         return jsonify({"error": f"Errore nel database: {err}"}), 500
 
+
+
+@app.route('/api/delete/uccelli/<int:id>', methods=['DELETE'])
+def delete_ucelli(id):
+    mydb = connect_to_db()
+    mycursor = mydb.cursor()
+
+    # Verifica se l'animale con questo id esiste
+    mycursor.execute("SELECT * FROM Uccelli WHERE Id = %s", (id,))
+    if not mycursor.fetchone():
+        mycursor.close()
+        mydb.close()
+        return jsonify({"message": "Animale non trovato"}), 404
+
+    # Esegue l'operazione di DELETE
+    sql = "DELETE FROM Uccelli WHERE Id = %s"
+    mycursor.execute(sql, (id,))
+    mydb.commit()
+
+    mycursor.close()
+    mydb.close()
+
+    return jsonify({"message": "Animale eliminato con successo!"}), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True)
